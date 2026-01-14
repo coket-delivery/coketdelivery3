@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💩 코도리의 똥찾기 게임 💩</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%), 
+                        url('1.jpg') center/cover no-repeat fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: clamp(24px, 6vw, 36px);
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: bold;
+        }
+
+        .difficulty-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .difficulty-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .flag-mode-toggle {
+            grid-column: 1 / -1;
+        }
+
+        .flag-mode-toggle label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            background: #ccc;
+            border-radius: 11px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            left: 20px;
+        }
+
+        .game-board-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            overflow: auto;
+            padding: 10px;
+            max-height: 450px;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 2px;
+            background: #ddd;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border: 1px solid #999;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            touch-action: none;
+            flex-shrink: 0;
+        }
+
+        .game-board.hard-mode .cell {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+
+        .cell:hover:not(.opened):not(.flagged) {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .cell.opened {
+            background: #f9f9f9;
+            border: 1px solid #bbb;
+            cursor: default;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell.mine {
+            background: #ff6b6b;
+            color: white;
+            font-size: clamp(14px, 4vw, 20px);
+        }
+
+        .cell.flagged {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #666;
+        }
+
+        .cell.empty {
+            color: #999;
+        }
+
+        .cell.number-1 { color: #0000ff; }
+        .cell.number-2 { color: #008000; }
+        .cell.number-3 { color: #ff0000; }
+        .cell.number-4 { color: #000080; }
+        .cell.number-5 { color: #800000; }
+        .cell.number-6 { color: #008080; }
+        .cell.number-7 { color: #000000; }
+        .cell.number-8 { color: #808080; }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .game-message {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            min-height: 30px;
+            color: #667eea;
+        }
+
+        .game-message.win {
+            color: #4caf50;
+        }
+
+        .game-message.lose {
+            color: #f44336;
+        }
+
+        .bottom-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title {
+                margin-bottom: 10px;
+            }
+
+            .stats {
+                gap: 10px;
+            }
+
+            .stat-box {
+                padding: 12px;
+            }
+
+            .difficulty-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .instructions {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+
+            .title {
+                font-size: 20px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .stat-box {
+                padding: 10px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+            }
+
+            .difficulty-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .bottom-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">💩 코도리의 똥찾기 💩</div>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-label">🚩 깃발</div>
+                    <div class="stat-value" id="flagCount">10</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">💩 똥</div>
+                    <div class="stat-value" id="mineCount">10</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">⏱️ 시간</div>
+                    <div class="stat-value" id="timer">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="difficulty-section">
+            <div class="difficulty-title">게임 난이도 선택</div>
+            <div class="difficulty-buttons">
+                <button onclick="setDifficulty(10, 10)">쉬움 (10x10)</button>
+                <button onclick="setDifficulty(12, 30)">보통 (12x12)</button>
+                <button onclick="setDifficulty(14, 50)">어려움 (14x14)</button>
+            </div>
+        </div>
+
+        <div class="control-buttons">
+            <div class="flag-mode-toggle" style="grid-column: 1 / -1;">
+                <label>
+                    🚩 깃발세우기모드
+                    <div class="toggle-switch" id="flagModeToggle" onclick="toggleFlagMode()">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="game-message" id="gameMessage"></div>
+
+        <div class="game-board-container">
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+
+        <div class="bottom-buttons">
+            <button onclick="initializeGame()">새로운게임 💩</button>
+            <button onclick="resetGame()">리셋 💩</button>
+        </div>
+
+        <div class="instructions">
+            <h3>게임 방법:</h3>
+            <ul>
+                <li><strong>왼쪽 클릭:</strong> 셀 열기</li>
+                <li><strong>오른쪽 클릭:</strong> 깃발 표시/제거</li>
+                <li><strong>깃발 모드 ON:</strong> 깃발만 표시 (좌클릭으로 깃발 표시)</li>
+                <p>유튜브 '걸코_Gulko' 저작권 콘텐츠입니다.</p>
+                <p>© 2026 코켓게임즈. All rights reserved.</p>
+                <p><a href="https://www.youtube.com/@Gulko" target="_blank">https://www.youtube.com/@Gulko</a></p>
+            </ul>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop volume="0.3"></audio>
+    <audio id="flagSound"></audio>
+    <audio id="loseSound"></audio>
+    <audio id="winSound"></audio>
+
+    <script>
+        const CELL_STATES = {
+            CLOSED: 'closed',
+            OPENED: 'opened',
+            FLAGGED: 'flagged',
+            MINE: 'mine'
+        };
+
+        let gameState = {
+            board: [],
+            rows: 10,
+            cols: 10,
+            mines: 10,
+            flagged: 0,
+            gameOver: false,
+            won: false,
+            startTime: null,
+            timerInterval: null,
+            flagMode: false,
+            musicStarted: false,
+            difficulty: 10
+        };
+
+        // 배경음악 설정
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.src = '1.mp3';
+        bgMusic.loop = true;
+        
+        // 효과음 설정
+        const flagSound = document.getElementById('flagSound');
+        flagSound.src = '2.mp3';
+        
+        const loseSound = document.getElementById('loseSound');
+        loseSound.src = '3.mp3';
+        
+        const winSound = document.getElementById('winSound');
+        winSound.src = '4.mp3';
+
+        function startBackgroundMusic() {
+            if (!gameState.musicStarted) {
+                gameState.musicStarted = true;
+                bgMusic.volume = 0.5;
+                bgMusic.muted = false;
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            console.log('배경음악 재생 중...');
+                        })
+                        .catch(err => {
+                            console.log('음악 재생 실패:', err);
+                            // 사용자 상호작용 후 다시 시도
+                            document.addEventListener('click', function retry() {
+                                bgMusic.play().catch(() => {});
+                                document.removeEventListener('click', retry);
+                            }, { once: true });
+                        });
+                }
+            }
+        }
+
+        function playFlagSound() {
+            flagSound.currentTime = 0;
+            flagSound.play().catch(e => console.log('효과음 재생 실패:', e));
+        }
+
+        function playLoseSound() {
+            loseSound.currentTime = 0;
+            loseSound.play().catch(e => console.log('효과음 재생 실패:', e));
+        }
+
+        function playWinSound() {
+            winSound.currentTime = 0;
+            winSound.play().catch(e => console.log('효과음 재생 실패:', e));
+        }
+
+        function setDifficulty(size, mineCount) {
+            startBackgroundMusic();
+            gameState.rows = size;
+            gameState.cols = size;
+            gameState.mines = mineCount;
+            gameState.difficulty = size;
+            initializeGame();
+        }
+
+        function showGameOverDialog(won) {
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            `;
+            
+            const dialogBox = document.createElement('div');
+            dialogBox.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                max-width: 300px;
+                animation: slideUp 0.3s ease;
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideUp {
+                    from { transform: translateY(50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            const message = document.createElement('div');
+            message.style.cssText = `
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: ${won ? '#4caf50' : '#f44336'};
+            `;
+            message.textContent = won ? '🎉 우리가 걸코다!' : '💩 게임 오버!';
+            
+            const subMessage = document.createElement('div');
+            subMessage.style.cssText = `
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 25px;
+            `;
+            subMessage.textContent = won ? '모든 안전한 칸을 열었습니다!' : '코도리 똥을 밟았습니다!';
+            
+            const button = document.createElement('button');
+            button.textContent = '확인';
+            button.style.cssText = `
+                padding: 12px 30px;
+                font-size: 16px;
+                font-weight: bold;
+                border: none;
+                border-radius: 8px;
+                background: #667eea;
+                color: white;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            `;
+            button.onmouseover = () => {
+                button.style.background = '#5568d3';
+                button.style.transform = 'translateY(-2px)';
+            };
+            button.onmouseout = () => {
+                button.style.background = '#667eea';
+                button.style.transform = 'translateY(0)';
+            };
+            button.onclick = () => {
+                dialog.remove();
+            };
+            
+            dialogBox.appendChild(message);
+            dialogBox.appendChild(subMessage);
+            dialogBox.appendChild(button);
+            dialog.appendChild(dialogBox);
+            document.body.appendChild(dialog);
+        }
+
+        function initializeGame() {
+            startBackgroundMusic();
+            clearInterval(gameState.timerInterval);
+            gameState.flagged = 0;
+            gameState.gameOver = false;
+            gameState.won = false;
+            gameState.startTime = null;
+            document.getElementById('timer').textContent = '0';
+            document.getElementById('gameMessage').textContent = '';
+            document.getElementById('gameMessage').className = '';
+
+            gameState.board = Array(gameState.rows).fill().map(() =>
+                Array(gameState.cols).fill({
+                    isMine: false,
+                    opened: false,
+                    flagged: false,
+                    adjacentMines: 0
+                })
+            );
+
+            let minesPlaced = 0;
+            while (minesPlaced < gameState.mines) {
+                const row = Math.floor(Math.random() * gameState.rows);
+                const col = Math.floor(Math.random() * gameState.cols);
+                if (!gameState.board[row][col].isMine) {
+                    gameState.board[row][col] = { ...gameState.board[row][col], isMine: true };
+                    minesPlaced++;
+                }
+            }
+
+            calculateAdjacentMines();
+            updateDisplay();
+        }
+
+        function calculateAdjacentMines() {
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    if (!gameState.board[row][col].isMine) {
+                        let count = 0;
+                        for (let dr = -1; dr <= 1; dr++) {
+                            for (let dc = -1; dc <= 1; dc++) {
+                                const newRow = row + dr;
+                                const newCol = col + dc;
+                                if (newRow >= 0 && newRow < gameState.rows && newCol >= 0 && newCol < gameState.cols) {
+                                    if (gameState.board[newRow][newCol].isMine) count++;
+                                }
+                            }
+                        }
+                        gameState.board[row][col] = { ...gameState.board[row][col], adjacentMines: count };
+                    }
+                }
+            }
+        }
+
+        function updateDisplay() {
+            const boardElement = document.getElementById('gameBoard');
+            boardElement.style.gridTemplateColumns = `repeat(${gameState.cols}, 1fr)`;
+            boardElement.classList.remove('hard-mode');
+            if (gameState.difficulty === 14) {
+                boardElement.classList.add('hard-mode');
+            }
+            boardElement.innerHTML = '';
+
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    const cell = gameState.board[row][col];
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+                    cellElement.dataset.row = row;
+                    cellElement.dataset.col = col;
+
+                    if (cell.opened || (gameState.gameOver && cell.isMine)) {
+                        cellElement.classList.add('opened');
+                        if (cell.isMine) {
+                            cellElement.classList.add('mine');
+                            cellElement.textContent = '💩';
+                        } else if (cell.adjacentMines > 0) {
+                            cellElement.classList.add(`number-${cell.adjacentMines}`);
+                            cellElement.textContent = cell.adjacentMines;
+                        } else {
+                            cellElement.classList.add('empty');
+                            cellElement.textContent = '';
+                        }
+                    } else if (cell.flagged) {
+                        cellElement.classList.add('flagged');
+                        cellElement.textContent = '🚩';
+                    } else {
+                        cellElement.textContent = '';
+                    }
+
+                    cellElement.addEventListener('click', (e) => handleCellClick(row, col, e));
+                    cellElement.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleCellRightClick(row, col);
+                    });
+
+                    boardElement.appendChild(cellElement);
+                }
+            }
+
+            document.getElementById('flagCount').textContent = gameState.mines - gameState.flagged;
+            document.getElementById('mineCount').textContent = gameState.mines;
+        }
+
+        function handleCellClick(row, col, e) {
+            startBackgroundMusic();
+            if (gameState.gameOver || gameState.won) return;
+            if (!gameState.startTime) {
+                gameState.startTime = Date.now();
+                startTimer();
+            }
+
+            const cell = gameState.board[row][col];
+
+            if (gameState.flagMode) {
+                if (!cell.opened) {
+                    cell.flagged = !cell.flagged;
+                    gameState.flagged += cell.flagged ? 1 : -1;
+                    if (cell.flagged) playFlagSound();
+                }
+            } else {
+                if (cell.flagged) return;
+                openCell(row, col);
+            }
+
+            updateDisplay();
+            checkWinCondition();
+        }
+
+        function handleCellRightClick(row, col) {
+            startBackgroundMusic();
+            if (gameState.gameOver || gameState.won) return;
+            const cell = gameState.board[row][col];
+            if (!cell.opened && !gameState.flagMode) {
+                cell.flagged = !cell.flagged;
+                gameState.flagged += cell.flagged ? 1 : -1;
+                if (cell.flagged) playFlagSound();
+                updateDisplay();
+            }
+        }
+
+        function openCell(row, col) {
+            const cell = gameState.board[row][col];
+            if (cell.opened || cell.flagged) return;
+
+            cell.opened = true;
+
+            if (cell.isMine) {
+                gameState.gameOver = true;
+                revealAllMines();
+                document.getElementById('gameMessage').textContent = '💩 게임 오버! 코도리 똥을 밟았습니다!';
+                document.getElementById('gameMessage').className = 'lose';
+                playLoseSound();
+                clearInterval(gameState.timerInterval);
+                setTimeout(() => showGameOverDialog(false), 500);
+                return;
+            }
+
+            if (cell.adjacentMines === 0) {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const newRow = row + dr;
+                        const newCol = col + dc;
+                        if (newRow >= 0 && newRow < gameState.rows && newCol >= 0 && newCol < gameState.cols) {
+                            if (!gameState.board[newRow][newCol].opened) {
+                                openCell(newRow, newCol);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function revealAllMines() {
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    if (gameState.board[row][col].isMine) {
+                        gameState.board[row][col].opened = true;
+                    }
+                }
+            }
+        }
+
+        function checkWinCondition() {
+            let openedCount = 0;
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    if (gameState.board[row][col].opened && !gameState.board[row][col].isMine) {
+                        openedCount++;
+                    }
+                }
+            }
+
+            if (openedCount === gameState.rows * gameState.cols - gameState.mines) {
+                gameState.won = true;
+                document.getElementById('gameMessage').textContent = '🎉 승리! 축하합니다!';
+                document.getElementById('gameMessage').className = 'win';
+                playWinSound();
+                clearInterval(gameState.timerInterval);
+                setTimeout(() => showGameOverDialog(true), 500);
+            }
+        }
+
+        function toggleFlagMode() {
+            startBackgroundMusic();
+            gameState.flagMode = !gameState.flagMode;
+            document.getElementById('flagModeToggle').classList.toggle('active', gameState.flagMode);
+        }
+
+        function resetGame() {
+            startBackgroundMusic();
+            initializeGame();
+        }
+
+        function startTimer() {
+            gameState.timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                document.getElementById('timer').textContent = elapsed;
+            }, 1000);
+        }
+
+        initializeGame();
+    </script>
+</body>
+</html>
